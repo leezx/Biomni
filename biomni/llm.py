@@ -209,6 +209,19 @@ def get_llm(
             ollama_kwargs["base_url"] = base_url
             print(f"🔧 Configured Ollama client with custom endpoint: {base_url}")
         
+        # ENHANCED: Add specific formatting instructions for Ollama models to improve response quality
+        # This helps smaller models like llama2 follow the required format more reliably
+        if stop_sequences is None:
+            stop_sequences = []
+        
+        # Add Biomni-specific stop sequences to help Ollama models format responses correctly
+        biomni_stops = ["</execute>", "</solution>", "</think>", "<observation>"]
+        for stop_seq in biomni_stops:
+            if stop_seq not in stop_sequences:
+                stop_sequences.append(stop_seq)
+        
+        ollama_kwargs["stop"] = stop_sequences
+        
         return ChatOllama(**ollama_kwargs)
 
     elif source == "Bedrock":

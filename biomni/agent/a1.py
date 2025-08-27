@@ -161,6 +161,12 @@ class A1:
             api_key=api_key,
             config=default_config,
         )
+        
+        # ENHANCED: Detect Ollama models and set flag for better prompt engineering
+        self.is_ollama_model = source == "Ollama" or (source is None and "ollama" in str(self.llm).lower())
+        if self.is_ollama_model:
+            print(f"🔧 Detected Ollama model: {llm}. Enhanced formatting instructions will be applied.")
+        
         self.module2api = module2api
         self.use_tool_retriever = use_tool_retriever
 
@@ -1006,6 +1012,20 @@ class A1:
 You are a helpful biomedical assistant assigned with the task of problem-solving.
 To achieve this, you will be using an interactive coding environment equipped with a variety of tool functions, data, and softwares to assist you throughout the process.
 
+CRITICAL FORMATTING REQUIREMENTS:
+- EVERY response MUST contain either <execute> or <solution> tags
+- NEVER send a response without these tags
+- ALWAYS close your tags properly: </execute> or </solution>
+- Format: <execute>your_code_here</execute> or <solution>your_answer_here</solution>
+
+IMPORTANT FOR OLLAMA MODELS: You are using an Ollama model. Please pay extra attention to the formatting requirements above. Always structure your responses with proper tags.
+
+OLLAMA-SPECIFIC INSTRUCTIONS:
+- Start your response with a brief thinking process
+- Then immediately provide either <execute> or <solution> tags
+- Keep your thinking concise but clear
+- Always end with the proper closing tag
+
 Given a task, make a plan first. The plan should be a numbered list of steps that you will take to solve the task. Be specific and detailed.
 Format your plan as a checklist with empty checkboxes like this:
 1. [ ] First step
@@ -1046,7 +1066,7 @@ Otherwise the system will not be able to know what has been done.
 For R code, use the #!R marker at the beginning of your code block to indicate it's R code.
 For Bash scripts and commands, use the #!BASH marker at the beginning of your code block. This allows for both simple commands and multi-line scripts with variables, loops, conditionals, loops, and other Bash features.
 
-In each response, you must include EITHER <execute> or <solution> tag. Not both at the same time. Do not respond with messages without any tags. No empty messages.
+REMEMBER: In each response, you must include EITHER <execute> or <solution> tag. Not both at the same time. Do not respond with messages without any tags. No empty messages.
 """
 
         # Add self-critic instructions if needed
@@ -1291,11 +1311,28 @@ Each library is listed with its description to help you understand its functiona
                         )
                     )
                 else:
-                    # Try to correct it
+                    # ENHANCED: Provide more specific formatting instructions for Ollama models
+                    # This helps smaller models understand exactly what format is expected
+                    correction_message = """CRITICAL: Your response is missing required tags!
+
+You MUST include ONE of these formats in your response:
+
+1. For code execution: <execute>your_code_here</execute>
+2. For final solution: <solution>your_answer_here</solution>
+
+Example response format:
+"I need to analyze this compound. Let me write code to predict ADMET properties.
+
+<execute>
+import pandas as pd
+print('Starting ADMET prediction...')
+# Your code here
+</execute>"
+
+Please regenerate your response with the proper tags."""
+                    
                     state["messages"].append(
-                        HumanMessage(
-                            content="Each response must include thinking process followed by either <execute> or <solution> tag. But there are no tags in the current response. Please follow the instruction, fix and regenerate the response again."
-                        )
+                        HumanMessage(content=correction_message)
                     )
                     state["next_step"] = "generate"
             return state
