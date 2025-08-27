@@ -179,10 +179,21 @@ def get_llm(
             raise ImportError(  # noqa: B904
                 "langchain-ollama package is required for Ollama models. Install with: pip install langchain-ollama"
             )
-        return ChatOllama(
-            model=model,
-            temperature=temperature,
-        )
+        
+        # FIXED: Build Ollama client with optional base_url support for custom endpoints
+        # This allows connecting to Ollama instances on different hosts, ports, or in containers
+        ollama_kwargs = {
+            "model": model,
+            "temperature": temperature,
+        }
+        
+        # ADDED: Conditionally add base_url if provided (for custom Ollama endpoints)
+        # This fixes the issue where base_url was ignored when source="Ollama"
+        if base_url is not None:
+            ollama_kwargs["base_url"] = base_url
+            print(f"🔧 Using custom Ollama endpoint: {base_url}")
+        
+        return ChatOllama(**ollama_kwargs)
 
     elif source == "Bedrock":
         try:
