@@ -180,18 +180,34 @@ def get_llm(
                 "langchain-ollama package is required for Ollama models. Install with: pip install langchain-ollama"
             )
         
-        # FIXED: Build Ollama client with optional base_url support for custom endpoints
-        # This allows connecting to Ollama instances on different hosts, ports, or in containers
+        # FIXED: Build Ollama client with proper base_url handling for Ollama API
+        # Ollama uses /api/* endpoints, not /v1/* like OpenAI
         ollama_kwargs = {
             "model": model,
             "temperature": temperature,
         }
         
-        # ADDED: Conditionally add base_url if provided (for custom Ollama endpoints)
-        # This fixes the issue where base_url was ignored when source="Ollama"
+        # ADDED: Handle base_url for Ollama - strip /v1 if present and ensure proper Ollama API structure
         if base_url is not None:
+            # Remove /v1 suffix if present (common mistake when using OpenAI-style URLs)
+            if base_url.endswith('/v1'):
+                base_url = base_url[:-3]  # Remove /v1
+                print(f"🔧 Removed /v1 suffix from base_url for Ollama compatibility")
+            
+            # Ensure the base_url ends with proper Ollama API structure
+            if not base_url.endswith('/api'):
+                # If base_url doesn't end with /api, we need to handle this carefully
+                # For Ollama, the base_url should point to the root of the Ollama service
+                if base_url.endswith('/'):
+                    base_url = base_url[:-1]  # Remove trailing slash
+                else:
+                    base_url = base_url  # Keep as is
+                
+                print(f"🔧 Using Ollama base_url: {base_url}")
+                print(f"⚠️  Note: Ollama will use {base_url}/api/* endpoints internally")
+            
             ollama_kwargs["base_url"] = base_url
-            print(f"🔧 Using custom Ollama endpoint: {base_url}")
+            print(f"🔧 Configured Ollama client with custom endpoint: {base_url}")
         
         return ChatOllama(**ollama_kwargs)
 
