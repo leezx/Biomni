@@ -1,0 +1,35 @@
+ADMET Properties Prediction for CC(C)CC1=CC=C(C=C1)C(C)C(=O)O
+
+Compound Analysis:
+- SMILES: CC(C)CC1=CC=C(C=C1)C(C)C(=O)O
+- Molecular Formula: C13H18O2
+- Molecular Weight: 206.28 g/mol
+
+ADMET Predictions (from predict_admet_properties function):
+- Solubility: -3.47 log mol/L
+- Lipophilicity: 0.17 (log-ratio)
+- Absorption (Caco-2 permeability): -4.89 cm/s
+- Absorption (HIA): 89.76 %
+- Absorption (Pgp Inhibitor): 39.19 %
+- Absorption (Bioavailability): 75.25 %
+- Distribution (BBB permeation): 56.93 %
+- Distribution (PPBR): 83.89 %
+- Metabolism (CYP2C19): 17.12 %
+- Metabolism (CYP2D6): 23.17 %
+- Metabolism (CYP3A4): 3.05 %
+- Metabolism (CYP1A2): 8.95 %
+- Metabolism (CYP2C9): 5.96 %
+- Excretion (Half-life): 8.05 h
+- Excretion (Clearance): 7.15 mL/min/kg
+- Clinical Toxicity: 26.06 %
+
+Physicochemical Properties (from calculate_physicochemical_properties function):
+- Molecular Weight: 206.28 g/mol
+- cLogP: 3.07
+- Topological Polar Surface Area: 37.3 Å²
+- H-Bond Donors: 1
+- H-Bond Acceptors: 1
+- Rotatable Bonds: 4
+- Estimated logD (at pH 7.4): 3.07
+- Estimated Acidic Groups: 2
+- Estimated Basic Groups: 0
