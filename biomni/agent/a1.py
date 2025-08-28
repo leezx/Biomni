@@ -1010,11 +1010,17 @@ class A1:
 You are a helpful biomedical assistant assigned with the task of problem-solving.
 To achieve this, you will be using an interactive coding environment equipped with a variety of tool functions, data, and softwares to assist you throughout the process.
 
-CRITICAL FORMATTING REQUIREMENTS:
+🚨 CRITICAL FORMATTING REQUIREMENTS - READ CAREFULLY:
 - EVERY response MUST contain either <execute> or <solution> tags
 - NEVER send a response without these tags
 - ALWAYS close your tags properly: </execute> or </solution>
 - Format: <execute>your_code_here</execute> or <solution>your_answer_here</solution>
+
+🔧 FOR COMPUTATIONAL TASKS (like ADMET prediction):
+- ALWAYS use <execute> tags with actual code
+- NEVER use <solution> tags for tasks requiring execution
+- Write real, executable Python code
+- Import the necessary functions and run them
 
 Given a task, make a plan first. The plan should be a numbered list of steps that you will take to solve the task. Be specific and detailed.
 Format your plan as a checklist with empty checkboxes like this:
@@ -1091,6 +1097,21 @@ CRITICAL EXECUTION GUIDELINES:
 - NEVER mix both tags in the same response
 - ALWAYS complete your tags properly (opening and closing)
 - If you start a tag, you MUST finish it
+
+SPECIFIC TASK INSTRUCTIONS:
+- For ADMET prediction tasks: ALWAYS use <execute> tags with code
+- For data analysis tasks: ALWAYS use <execute> tags with code
+- For computational tasks: ALWAYS use <execute> tags with code
+- Only use <solution> tags for final answers without execution
+
+EXAMPLE FOR ADMET TASKS:
+"I need to predict ADMET properties. Let me write and execute code to do this.
+
+<execute>
+from biomni.tool.pharmacology import predict_admet_properties_simple
+result = predict_admet_properties_simple(['CC(C)CC1=CC=C(C=C1)C(C)C(=O)O'])
+print(result)
+</execute>"
 ============================================
 """
 
@@ -1291,6 +1312,12 @@ Each library is listed with its description to help you understand its functiona
 
         # Define the nodes
         def generate(state: AgentState) -> AgentState:
+            # DEBUG: Print the system prompt being sent
+            print("\n🔍 DEBUG: System prompt being sent to LLM:")
+            print("=" * 80)
+            print(self.system_prompt[:500] + "..." if len(self.system_prompt) > 500 else self.system_prompt)
+            print("=" * 80)
+            
             messages = [SystemMessage(content=self.system_prompt)] + state["messages"]
             response = self.llm.invoke(messages)
 
@@ -1340,21 +1367,30 @@ Each library is listed with its description to help you understand its functiona
                     # This helps smaller models understand exactly what format is expected
                     correction_message = """CRITICAL: Your response is missing required tags!
 
-You MUST include ONE of these formats in your response:
+For ADMET prediction tasks, you MUST use <execute> tags with code!
 
-1. For code execution: <execute>your_code_here</execute>
-2. For final solution: <solution>your_answer_here</solution>
-
-Example response format:
-"I need to analyze this compound. Let me write code to predict ADMET properties.
+REQUIRED FORMAT FOR ADMET TASKS:
+"I need to predict ADMET properties for this compound. Let me write and execute code to do this.
 
 <execute>
-import pandas as pd
+from biomni.tool.pharmacology import predict_admet_properties_simple
+
+# The compound SMILES: CC(C)CC1=CC=C(C=C1)C(C)C(=O)O
 print('Starting ADMET prediction...')
-# Your code here
+
+result = predict_admet_properties_simple(['CC(C)CC1=CC=C(C=C1)C(C)C(=O)O'])
+print(result)
+
+print('ADMET prediction complete!')
 </execute>"
 
-Please regenerate your response with the proper tags."""
+IMPORTANT:
+- ALWAYS use <execute> tags for ADMET tasks
+- NEVER use <solution> tags for tasks requiring code execution
+- ALWAYS complete your tags properly
+- Write actual executable code, not just descriptions
+
+Please regenerate your response with the proper <execute> tags and code."""
                     
                     state["messages"].append(
                         HumanMessage(content=correction_message)
