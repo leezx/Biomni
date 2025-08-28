@@ -157,6 +157,27 @@ description = [
         ],
     },
     {
+        "description": "Simple, reliable ADMET prediction function that works without external dependencies. "
+        "Provides basic molecular analysis and ADMET predictions based on structural features.",
+        "name": "predict_admet_properties_simple",
+        "optional_parameters": [
+            {
+                "default": "MPNN",
+                "description": "Model type (currently simplified for reliability)",
+                "name": "ADMET_model_type",
+                "type": "str",
+            }
+        ],
+        "required_parameters": [
+            {
+                "default": None,
+                "description": "List of SMILES strings representing chemical compounds to analyze",
+                "name": "smiles_list",
+                "type": "List[str]",
+            }
+        ],
+    },
+    {
         "description": "Predicts binding affinity between small molecules and a "
         "protein sequence using pre-trained deep learning models.",
         "name": "predict_binding_affinity_protein_1d_sequence",

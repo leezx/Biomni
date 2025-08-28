@@ -1084,6 +1084,13 @@ CONSISTENCY REQUIREMENTS:
 - Maintain the same level of detail and thoroughness
 - Follow the same problem-solving approach
 - Ensure comparable results regardless of model type
+
+CRITICAL EXECUTION GUIDELINES:
+- For tasks requiring code execution, ALWAYS use <execute> tags
+- For final solutions without execution, use <solution> tags
+- NEVER mix both tags in the same response
+- ALWAYS complete your tags properly (opening and closing)
+- If you start a tag, you MUST finish it
 ============================================
 """
 
