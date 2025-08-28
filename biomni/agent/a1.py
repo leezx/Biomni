@@ -1105,13 +1105,30 @@ SPECIFIC TASK INSTRUCTIONS:
 - Only use <solution> tags for final answers without execution
 
 EXAMPLE FOR ADMET TASKS:
-"I need to predict ADMET properties. Let me write and execute code to do this.
+"I need to predict ADMET properties for this compound. Let me write and execute code to do this.
 
+<execute>
+from biomni.tool.pharmacology import predict_admet_properties_simple
+
+# The compound SMILES: CC(C)CC1=CC=C(C=C1)C(C)C(=O)O
+print('Starting ADMET prediction...')
+
+result = predict_admet_properties_simple(['CC(C)CC1=CC=C(C=C1)C(C)C(=O)O'])
+print(result)
+
+print('ADMET prediction complete!')
+</execute>"
+
+🚨 CRITICAL: For ADMET tasks, ONLY use the biomni.tool.pharmacology.predict_admet_properties_simple function!
+🚨 DO NOT use deeppurpose, rdkit, or any other external libraries!
+🚨 ONLY use the built-in biomni function that is guaranteed to work!
+
+📋 COPY-PASTE THIS EXACT CODE FOR ADMET TASKS:
 <execute>
 from biomni.tool.pharmacology import predict_admet_properties_simple
 result = predict_admet_properties_simple(['CC(C)CC1=CC=C(C=C1)C(C)C(=O)O'])
 print(result)
-</execute>"
+</execute>
 ============================================
 """
 
@@ -1332,9 +1349,18 @@ Each library is listed with its description to help you understand its functiona
             if "<think>" in msg and "</think>" not in msg:
                 msg += "</think>"
 
-            think_match = re.search(r"<think>(.*?)</think>", msg, re.DOTALL)
-            execute_match = re.search(r"<execute>(.*?)</execute>", msg, re.DOTALL)
-            answer_match = re.search(r"<solution>(.*?)</solution>", msg, re.DOTALL)
+            # DEBUG: Print what we're trying to parse
+            print(f"\n🔍 DEBUG: Parsing message: {msg[:200]}...")
+            
+            # More robust regex patterns that handle whitespace and newlines
+            think_match = re.search(r"<think>\s*(.*?)\s*</think>", msg, re.DOTALL)
+            execute_match = re.search(r"<execute>\s*(.*?)\s*</execute>", msg, re.DOTALL)
+            answer_match = re.search(r"<solution>\s*(.*?)\s*</solution>", msg, re.DOTALL)
+            
+            # DEBUG: Print what we found
+            print(f"🔍 DEBUG: think_match: {think_match is not None}")
+            print(f"🔍 DEBUG: execute_match: {execute_match is not None}")
+            print(f"🔍 DEBUG: answer_match: {answer_match is not None}")
 
             # Add the message to the state before checking for errors
             state["messages"].append(AIMessage(content=msg.strip()))
@@ -1346,7 +1372,38 @@ Each library is listed with its description to help you understand its functiona
             elif think_match:
                 state["next_step"] = "generate"
             else:
+                # FALLBACK: Check for partial tag matches
                 print("parsing error...")
+                print("🔍 DEBUG: Trying fallback parsing...")
+                
+                # Check if we have any opening tags
+                has_execute_open = "<execute>" in msg
+                has_solution_open = "<solution>" in msg
+                has_think_open = "<think>" in msg
+                
+                print(f"🔍 DEBUG: has_execute_open: {has_execute_open}")
+                print(f"🔍 DEBUG: has_solution_open: {has_solution_open}")
+                print(f"🔍 DEBUG: has_think_open: {has_think_open}")
+                
+                # If we have opening tags but no closing tags, try to fix them
+                if has_execute_open and "</execute>" not in msg:
+                    print("🔍 DEBUG: Found <execute> but no </execute>, fixing...")
+                    msg = msg + "</execute>"
+                    state["messages"][-1] = AIMessage(content=msg.strip())
+                    state["next_step"] = "execute"
+                    return state
+                elif has_solution_open and "</solution>" not in msg:
+                    print("🔍 DEBUG: Found <solution> but no </solution>, fixing...")
+                    msg = msg + "</solution>"
+                    state["messages"][-1] = AIMessage(content=msg.strip())
+                    state["next_step"] = "end"
+                    return state
+                elif has_think_open and "</think>" not in msg:
+                    print("🔍 DEBUG: Found <think> but no </think>, fixing...")
+                    msg = msg + "</think>"
+                    state["messages"][-1] = AIMessage(content=msg.strip())
+                    state["next_step"] = "generate"
+                    return state
                 # Check if we already added an error message to avoid infinite loops
                 error_count = sum(
                     1 for m in state["messages"] if isinstance(m, AIMessage) and "There are no tags" in m.content
