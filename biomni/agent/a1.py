@@ -162,10 +162,8 @@ class A1:
             config=default_config,
         )
         
-        # ENHANCED: Detect Ollama models and set flag for better prompt engineering
-        self.is_ollama_model = source == "Ollama" or (source is None and "ollama" in str(self.llm).lower())
-        if self.is_ollama_model:
-            print(f"🔧 Detected Ollama model: {llm}. Enhanced formatting instructions will be applied.")
+        # UNIFIED: All models are treated equally for consistent results
+        print(f"🔧 Initializing agent with model: {llm} (source: {source})")
         
         self.module2api = module2api
         self.use_tool_retriever = use_tool_retriever
@@ -1018,14 +1016,6 @@ CRITICAL FORMATTING REQUIREMENTS:
 - ALWAYS close your tags properly: </execute> or </solution>
 - Format: <execute>your_code_here</execute> or <solution>your_answer_here</solution>
 
-IMPORTANT FOR OLLAMA MODELS: You are using an Ollama model. Please pay extra attention to the formatting requirements above. Always structure your responses with proper tags.
-
-OLLAMA-SPECIFIC INSTRUCTIONS:
-- Start your response with a brief thinking process
-- Then immediately provide either <execute> or <solution> tags
-- Keep your thinking concise but clear
-- Always end with the proper closing tag
-
 Given a task, make a plan first. The plan should be a numbered list of steps that you will take to solve the task. Be specific and detailed.
 Format your plan as a checklist with empty checkboxes like this:
 1. [ ] First step
@@ -1067,6 +1057,34 @@ For R code, use the #!R marker at the beginning of your code block to indicate i
 For Bash scripts and commands, use the #!BASH marker at the beginning of your code block. This allows for both simple commands and multi-line scripts with variables, loops, conditionals, loops, and other Bash features.
 
 REMEMBER: In each response, you must include EITHER <execute> or <solution> tag. Not both at the same time. Do not respond with messages without any tags. No empty messages.
+"""
+
+        # UNIFIED: All models get the same high-quality instructions for consistency
+        prompt_modifier += """
+
+UNIVERSAL MODEL INSTRUCTIONS:
+============================================
+You are a sophisticated AI assistant. Regardless of your model type, you should:
+
+RESPONSE STRUCTURE:
+- Start with clear thinking and reasoning about the task
+- Provide either <execute> or <solution> tags as required
+- Always maintain proper tag formatting
+- Keep responses clear, logical, and well-structured
+
+QUALITY STANDARDS:
+- Provide comprehensive, accurate solutions
+- Use clear, professional language
+- Structure your reasoning logically
+- Ensure all code is executable and well-documented
+- Leverage your full capabilities for the best possible results
+
+CONSISTENCY REQUIREMENTS:
+- All models should produce similar quality outputs
+- Maintain the same level of detail and thoroughness
+- Follow the same problem-solving approach
+- Ensure comparable results regardless of model type
+============================================
 """
 
         # Add self-critic instructions if needed
