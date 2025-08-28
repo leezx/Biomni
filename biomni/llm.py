@@ -187,6 +187,14 @@ def get_llm(
             "temperature": temperature,
         }
         
+        # ENHANCED: Special handling for Qwen3-Coder model (coding-focused model)
+        if "qwen3-coder" in model.lower():
+            print(f"🚀 Detected Qwen3-Coder model: {model}. Applying coding-optimized settings.")
+            # Qwen3-Coder is excellent at code generation, so we can use lower temperature for more consistent output
+            if temperature is None or temperature > 0.3:
+                ollama_kwargs["temperature"] = 0.3
+                print(f"🔧 Adjusted temperature to 0.3 for Qwen3-Coder (optimal for code generation)")
+        
         # ADDED: Handle base_url for Ollama - strip /v1 if present and ensure proper Ollama API structure
         if base_url is not None:
             # Remove /v1 suffix if present (common mistake when using OpenAI-style URLs)
