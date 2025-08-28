@@ -1010,6 +1010,17 @@ class A1:
 You are a helpful biomedical assistant assigned with the task of problem-solving.
 To achieve this, you will be using an interactive coding environment equipped with a variety of tool functions, data, and softwares to assist you throughout the process.
 
+🚨 IMMEDIATE INSTRUCTION FOR ADMET TASKS:
+If the user asks for ADMET prediction, you MUST use ONLY this code:
+<execute>
+from biomni.tool.pharmacology import predict_admet_properties_simple
+result = predict_admet_properties_simple(['SMILES_STRING_HERE'])
+print(result)
+</execute>
+
+DO NOT use rdkit, deeppurpose, pandas, or any other libraries!
+ONLY use the biomni function!
+
 🚨 CRITICAL FORMATTING REQUIREMENTS - READ CAREFULLY:
 - EVERY response MUST contain either <execute> or <solution> tags
 - NEVER send a response without these tags
@@ -1123,12 +1134,20 @@ print('ADMET prediction complete!')
 🚨 DO NOT use deeppurpose, rdkit, or any other external libraries!
 🚨 ONLY use the built-in biomni function that is guaranteed to work!
 
-📋 COPY-PASTE THIS EXACT CODE FOR ADMET TASKS:
+🚫 FORBIDDEN LIBRARIES FOR ADMET TASKS:
+- rdkit (will cause import errors)
+- deeppurpose (not available)
+- pandas (not needed for simple prediction)
+- Any other external libraries
+
+✅ REQUIRED CODE FOR ADMET TASKS:
 <execute>
 from biomni.tool.pharmacology import predict_admet_properties_simple
 result = predict_admet_properties_simple(['CC(C)CC1=CC=C(C=C1)C(C)C(=O)O'])
 print(result)
 </execute>
+
+⚠️ WARNING: If you use any other libraries or functions, the code will fail and you will be asked to regenerate!
 ============================================
 """
 
@@ -1464,6 +1483,48 @@ Please regenerate your response with the proper <execute> tags and code."""
             execute_match = re.search(r"<execute>(.*?)</execute>", last_message, re.DOTALL)
             if execute_match:
                 code = execute_match.group(1)
+                
+                # CODE VALIDATION: Check if ADMET code uses forbidden libraries
+                print(f"\n🔍 DEBUG: Code to execute: {code[:200]}...")
+                
+                # Check for ADMET-specific validation
+                if any(keyword in code.lower() for keyword in ['admet', 'smiles', 'compound']):
+                    forbidden_libs = ['rdkit', 'deeppurpose', 'pandas']
+                    used_forbidden = [lib for lib in forbidden_libs if lib in code.lower()]
+                    
+                    if used_forbidden:
+                        print(f"🚫 FORBIDDEN LIBRARIES DETECTED: {used_forbidden}")
+                        print("❌ Code execution blocked - using forbidden libraries!")
+                        
+                        # Add error message and ask for regeneration
+                        error_msg = f"""🚫 CODE EXECUTION BLOCKED!
+
+You used forbidden libraries: {', '.join(used_forbidden)}
+
+For ADMET tasks, you MUST use ONLY:
+from biomni.tool.pharmacology import predict_admet_properties_simple
+
+Please regenerate your response with the correct code that uses ONLY the biomni function."""
+                        
+                        state["messages"].append(HumanMessage(content=error_msg))
+                        state["next_step"] = "generate"
+                        return state
+                    
+                    # Check if the required function is used
+                    if 'predict_admet_properties_simple' not in code:
+                        print("❌ Required function not found in ADMET code!")
+                        error_msg = """🚫 CODE EXECUTION BLOCKED!
+
+Your ADMET code is missing the required function:
+from biomni.tool.pharmacology import predict_admet_properties_simple
+
+Please regenerate your response with the correct code."""
+                        
+                        state["messages"].append(HumanMessage(content=error_msg))
+                        state["next_step"] = "generate"
+                        return state
+                    
+                    print("✅ ADMET code validation passed - using correct function!")
 
                 # Set timeout duration (10 minutes = 600 seconds)
                 timeout = self.timeout_seconds
